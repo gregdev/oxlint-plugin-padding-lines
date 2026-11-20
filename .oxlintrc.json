@@ -1,0 +1,115 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "import"],
+  "jsPlugins": ["./dist/index.js"],
+  "env": {
+    "node": true,
+    "es2024": true
+  },
+  "ignorePatterns": ["dist/**", "coverage/**", "node_modules/**"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "curly": "error",
+    "prefer-const": "error",
+    "no-var": "error",
+    "eqeqeq": [
+      "error",
+      "always",
+      {
+        "null": "ignore"
+      }
+    ],
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports"
+      }
+    ],
+    "typescript/no-explicit-any": "warn",
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "@gregdev/oxlint-plugin-stylistic/padding-line-between-statements": [
+      "error",
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "return"
+      },
+      {
+        "blankLine": "any",
+        "prev": ["block-like", "block"],
+        "next": "return"
+      },
+      {
+        "blankLine": "never",
+        "prev": "empty",
+        "next": "return"
+      },
+      {
+        "blankLine": "any",
+        "prev": ["const", "let", "var", "expression"],
+        "next": "return"
+      },
+      {
+        "blankLine": "always",
+        "prev": "multiline-const",
+        "next": "return"
+      },
+      {
+        "blankLine": "always",
+        "prev": "multiline-let",
+        "next": "return"
+      },
+      {
+        "blankLine": "always",
+        "prev": "import",
+        "next": "*"
+      },
+      {
+        "blankLine": "any",
+        "prev": "import",
+        "next": "import"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "block-like"
+      },
+      {
+        "blankLine": "always",
+        "prev": "block-like",
+        "next": "*"
+      },
+      {
+        "blankLine": "any",
+        "prev": "block-like",
+        "next": "block-like"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": "throw"
+      },
+      {
+        "blankLine": "always",
+        "prev": "*",
+        "next": ["function", "class"]
+      },
+      {
+        "blankLine": "always",
+        "prev": ["function", "class"],
+        "next": "*"
+      }
+    ]
+  }
+}

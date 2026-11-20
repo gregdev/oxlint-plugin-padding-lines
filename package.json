@@ -1,0 +1,75 @@
+{
+  "name": "@gregdev/oxlint-plugin-stylistic",
+  "version": "0.1.0",
+  "description": "Oxlint stylistic rules missing from oxlint core, with ESLint-identical behaviour. Currently: padding-line-between-statements.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "keywords": [
+    "oxlint",
+    "oxlint-plugin",
+    "eslint",
+    "eslint-plugin",
+    "stylistic",
+    "formatting",
+    "padding-line-between-statements"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "pretest": "pnpm build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prelint": "pnpm build",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "prepublishOnly": "pnpm build && pnpm test",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check"
+  },
+  "dependencies": {
+    "@oxlint/plugins": "^1.94.0"
+  },
+  "peerDependencies": {
+    "eslint": ">=8.57.0",
+    "oxlint": ">=1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "eslint": {
+      "optional": true
+    },
+    "oxlint": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "eslint": "^10.15.0",
+    "oxfmt": "0.79.0",
+    "oxlint": "1.94.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^4.1.12"
+  }
+}
