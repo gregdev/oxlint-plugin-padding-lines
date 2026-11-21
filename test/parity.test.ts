@@ -1,56 +1,124 @@
 import { Linter } from 'eslint'
 import { builtinRules } from 'eslint/use-at-your-own-risk'
+import tsParser from '@typescript-eslint/parser'
 import { describe, expect, it } from 'vitest'
-import tseslint from 'typescript-eslint'
-import { MESSAGES } from '../src/index.js'
+import type { PaddingOption } from './fixtures.js'
 import { FIXTURES, SOA_BUYFLOW_OPTIONS } from './fixtures.js'
-import { runOxlint } from './helpers/run-oxlint.js'
+import { runOxlint, runOxlintFix } from './helpers/run-oxlint.js'
 
 const RULE = 'padding-line-between-statements'
 
-const eslintMessages = (
-  code: string,
-  options: typeof SOA_BUYFLOW_OPTIONS,
-): string[] => {
-  const linter = new Linter()
-  const plugin = builtinRules.get(RULE)
+const linter = new Linter()
+const paddingRule = builtinRules.get(RULE)
 
-  if (!plugin) {
-    throw new Error(`${RULE} is not available in this ESLint version`)
-  }
-
-  return linter
-    .verify(code, {
-      languageOptions: {
-        ecmaVersion: 2022,
-        sourceType: 'module',
-        parser: tseslint.parser,
-      },
-      plugins: { oracle: { rules: { [RULE]: plugin } } },
-      rules: { [`oracle/${RULE}`]: ['error', ...options] },
-    })
-    .map((message) => `${message.line}:${message.message}`)
+if (!paddingRule) {
+  throw new Error(`${RULE} is not available in this ESLint version`)
 }
 
-describe('parity with ESLint', () => {
-  for (const [name, code] of Object.entries(FIXTURES)) {
-    it(`matches ESLint on ${name}`, () => {
-      const expected = eslintMessages(code, SOA_BUYFLOW_OPTIONS)
-      const actual = runOxlint(code, SOA_BUYFLOW_OPTIONS)
+const eslintConfig = (options: readonly PaddingOption[]) => ({
+  languageOptions: {
+    ecmaVersion: 2022 as const,
+    sourceType: 'module' as const,
+    parser: tsParser,
+  },
+  plugins: { oracle: { rules: { [RULE]: paddingRule } } },
+  rules: { [`oracle/${RULE}`]: ['error', ...options] },
+})
 
-      expect(actual).toEqual(expected)
+const eslintFindings = (
+  code: string,
+  options: readonly PaddingOption[],
+): string[] =>
+  linter
+    .verify(code, eslintConfig(options))
+    .map((message) => `${message.line}:${message.message}`)
+
+describe('parity with ESLint: findings', () => {
+  for (const [name, code] of Object.entries(FIXTURES)) {
+    it(`reports the same findings on ${name}`, () => {
+      expect(runOxlint(code, SOA_BUYFLOW_OPTIONS)).toEqual(
+        eslintFindings(code, SOA_BUYFLOW_OPTIONS),
+      )
+    })
+  }
+})
+
+describe('parity with ESLint: autofix', () => {
+  for (const [name, code] of Object.entries(FIXTURES)) {
+    it(`produces the same source as ESLint --fix on ${name}`, () => {
+      const expected = linter.verifyAndFix(
+        code,
+        eslintConfig(SOA_BUYFLOW_OPTIONS),
+      )
+
+      expect(runOxlintFix(code, SOA_BUYFLOW_OPTIONS)).toBe(expected.output)
     })
   }
 
-  it('uses the same message text as ESLint', () => {
-    const [first] = eslintMessages(
-      'export function f() {\n  const a = 1\n\n  return a\n}\n',
-      [{ blankLine: 'never', prev: '*', next: 'return' }],
-    )
+  it('inserts a blank line after a trailing comment', () => {
+    const code = [
+      'export function f() {',
+      '  a() // why',
+      '  // after',
+      '  return 1',
+      '}',
+      '',
+    ].join('\n')
+    const options: PaddingOption[] = [
+      { blankLine: 'always', prev: '*', next: 'return' },
+    ]
+    const expected = linter.verifyAndFix(code, eslintConfig(options))
 
-    expect(first).toBe(`4:${MESSAGES.unexpectedBlankLine}`)
-    expect(MESSAGES.expectedBlankLine).toBe(
-      'Expected blank line before this statement.',
-    )
+    expect(runOxlintFix(code, options)).toBe(expected.output)
+    expect(expected.output).toContain('a() // why\n\n  // after')
+  })
+
+  it('declines to merge a comment-separated gap', () => {
+    const code = [
+      'export function f() {',
+      '  a()',
+      '',
+      '  // why',
+      '  return 1',
+      '}',
+      '',
+    ].join('\n')
+    const options: PaddingOption[] = [
+      { blankLine: 'never', prev: '*', next: 'return' },
+    ]
+    const expected = linter.verifyAndFix(code, eslintConfig(options))
+
+    expect(runOxlintFix(code, options)).toBe(expected.output)
+  })
+
+  it('removes a single blank line for a never rule', () => {
+    const code = [
+      'export function f() {',
+      '  const a = 1',
+      '',
+      '  return a',
+      '}',
+      '',
+    ].join('\n')
+    const options: PaddingOption[] = [
+      { blankLine: 'never', prev: '*', next: 'return' },
+    ]
+    const expected = linter.verifyAndFix(code, eslintConfig(options))
+
+    expect(runOxlintFix(code, options)).toBe(expected.output)
+    expect(expected.output).not.toContain('const a = 1\n\n')
+  })
+
+  it('is a no-op on already-correct source', () => {
+    const code = [
+      'export function f() {',
+      '  const a = 1',
+      '',
+      '  return a',
+      '}',
+      '',
+    ].join('\n')
+
+    expect(runOxlintFix(code, SOA_BUYFLOW_OPTIONS)).toBe(code)
   })
 })

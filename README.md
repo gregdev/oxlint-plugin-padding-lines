@@ -11,7 +11,7 @@ This plugin fills that gap without dragging a second linter into the project.
 
 | Rule                              | Status                                        | Autofix |
 | --------------------------------- | --------------------------------------------- | ------- |
-| `padding-line-between-statements` | All ESLint statement types and option triples | No      |
+| `padding-line-between-statements` | All ESLint statement types and option triples | Yes     |
 
 Semantics are copied from ESLint's own implementation, including the cases that
 are easy to get wrong:
@@ -71,7 +71,8 @@ export default [
 
 The test suite runs every fixture through both this rule (via the real oxlint
 binary) and ESLint's built-in `padding-line-between-statements` (via
-`eslint/use-at-your-own-risk`), then asserts the findings are identical.
+`eslint/use-at-your-own-risk`), then asserts that findings _and_ `--fix`
+output are byte-identical.
 
 ```bash
 pnpm test
@@ -82,8 +83,9 @@ runtime and is not a peer dependency.
 
 ## Caveats
 
-- **No autofix.** ESLint's rule can insert and remove blank lines; this one
-  only reports. Add `--fix`-able output only if you really need it.
+- **Autofix inserts and removes one blank line.** `--fix` matches ESLint's
+  output. A `never` violation with a comment between the statements is
+  reported but not fixed, because merging the gap would swallow the comment.
 - **oxlint JS plugins are alpha.** The `@oxlint/plugins` API can change between
   oxlint minors. The version is pinned and treated as a peer range.
 - **Vue/Svelte/Astro:** oxlint lints only `<script>` blocks. That matches what

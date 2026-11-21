@@ -1,7 +1,13 @@
-import type { Comment, SourceCode, Token } from '@oxlint/plugins'
+import type { Comment, Location, SourceCode, Token } from '@oxlint/plugins'
 import type { AstNode } from './ast.js'
 
-type TokenOrComment = Token | Comment
+/** Anything carrying `value`, `range` and `loc`: a token or a comment. */
+export type TokenOrComment = Token | Comment
+
+/** Anything positioned in the source: a node, token or comment. */
+interface Located {
+  loc: Location
+}
 
 /**
  * The token that really ends a statement. A leading semicolon in
@@ -31,42 +37,47 @@ export const getActualLastToken = (
   return isSemicolonLessStyle ? previousToken : semicolonToken
 }
 
-/** Blank-line gaps between two statements. Comments split a gap in two. */
-export const countBlankLineGaps = (
+/**
+ * Token pairs with at least one blank line between them. Comments split a gap
+ * in two, so one blank line above a comment and one below yields two pairs.
+ */
+export const getPaddingLineSequences = (
   sourceCode: SourceCode,
   previousNode: AstNode,
   nextNode: AstNode,
-): number => {
-  let cursor: TokenOrComment | null = getActualLastToken(
-    sourceCode,
-    previousNode,
-  )
+): [TokenOrComment, TokenOrComment][] => {
+  const pairs: [TokenOrComment, TokenOrComment][] = []
+  const start = getActualLastToken(sourceCode, previousNode)
 
-  if (!cursor) {
-    return 0
+  if (!start) {
+    return pairs
   }
 
-  if (nextNode.loc.start.line - cursor.loc.end.line < 2) {
-    return 0
+  if (nextNode.loc.start.line - start.loc.end.line < 2) {
+    return pairs
   }
 
-  let gaps = 0
+  let cursor: TokenOrComment = start
 
   while (cursor.range[0] < nextNode.range[0]) {
-    const token: TokenOrComment | null = sourceCode.getTokenAfter(cursor, {
+    const token = sourceCode.getTokenAfter(cursor, {
       includeComments: true,
-    })
+    }) as TokenOrComment | null
 
     if (!token) {
       break
     }
 
     if (token.loc.start.line - cursor.loc.end.line >= 2) {
-      gaps += 1
+      pairs.push([cursor, token])
     }
 
     cursor = token
   }
 
-  return gaps
+  return pairs
 }
+
+/** True when `second` starts on the line `first` ends. */
+export const isOnSameLine = (first: Located, second: Located): boolean =>
+  first.loc.end.line === second.loc.start.line

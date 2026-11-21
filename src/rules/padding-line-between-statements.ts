@@ -2,11 +2,12 @@ import { defineRule } from '@oxlint/plugins'
 import type { Context, RuleOptionsSchema } from '@oxlint/plugins'
 import type { AstNode } from '../lib/ast.js'
 import { asNode, asNodeList, field } from '../lib/ast.js'
+import { fixExpectedBlankLine, fixUnexpectedBlankLine } from '../lib/fix.js'
 import {
   STATEMENT_TYPE_NAMES,
   statementMatches,
 } from '../lib/statement-types.js'
-import { countBlankLineGaps } from '../lib/tokens.js'
+import { getPaddingLineSequences } from '../lib/tokens.js'
 
 export type PaddingType = 'always' | 'never' | 'any'
 
@@ -82,6 +83,7 @@ const toPaddingOptions = (value: unknown): PaddingLineOption[] => {
 const paddingLineBetweenStatements = defineRule({
   meta: {
     type: 'layout',
+    fixable: 'whitespace',
     docs: {
       description:
         'Require or disallow blank lines between statements, matching ESLint semantics.',
@@ -171,12 +173,22 @@ const paddingLineBetweenStatements = defineRule({
           continue
         }
 
-        const gaps = countBlankLineGaps(sourceCode, previousNode, node)
+        const gaps = getPaddingLineSequences(sourceCode, previousNode, node)
 
-        if (padding === 'always' && gaps === 0) {
-          context.report({ node, message: MESSAGES.expectedBlankLine })
-        } else if (padding === 'never' && gaps > 0) {
-          context.report({ node, message: MESSAGES.unexpectedBlankLine })
+        if (padding === 'always' && gaps.length === 0) {
+          context.report({
+            node,
+            message: MESSAGES.expectedBlankLine,
+            fix: (fixer) =>
+              fixExpectedBlankLine(sourceCode, previousNode, node, fixer),
+          })
+        } else if (padding === 'never' && gaps.length > 0) {
+          context.report({
+            node,
+            message: MESSAGES.unexpectedBlankLine,
+            fix: (fixer) =>
+              fixUnexpectedBlankLine(sourceCode, previousNode, node, fixer),
+          })
         }
       }
     }
