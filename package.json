@@ -3,6 +3,14 @@
   "version": "0.1.0",
   "description": "A native oxlint rule for padding-line-between-statements, behaving the same as its ESLint counterpart, with autofix.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gregdev/oxlint-plugin-padding-lines.git"
+  },
+  "homepage": "https://github.com/gregdev/oxlint-plugin-padding-lines#readme",
+  "bugs": {
+    "url": "https://github.com/gregdev/oxlint-plugin-padding-lines/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

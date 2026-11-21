@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  # OIDC token: npm exchanges it for a short-lived publish credential
+  # (trusted publishing) and signs the provenance attestation with it.
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.21.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          # Node 24 ships npm >= 11.5.1, the floor for trusted publishing.
+          node-version: 24
+          # No registry-url: it would write an .npmrc with a ${NODE_AUTH_TOKEN}
+          # placeholder, and trusted publishing must not present a token.
+          # No dependency cache: release builds should resolve from the lockfile.
+
+      - name: Check npm supports trusted publishing
+        run: |
+          set -euo pipefail
+          version="$(npm --version)"
+          echo "npm ${version}"
+          if [ "$(printf '%s\n' 11.5.1 "$version" | sort -V | head -1)" != "11.5.1" ]; then
+            echo "::error::npm ${version} is older than 11.5.1, which trusted publishing requires"
+            exit 1
+          fi
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package.json version ${version}"
+            exit 1
+          fi
+          echo "Releasing ${version}"
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      # No NODE_AUTH_TOKEN: the CLI detects the OIDC environment and uses it.
+      # `prepublishOnly` re-runs build + test, so a stale dist/ cannot ship.
+      - name: Publish
+        run: npm publish

@@ -120,6 +120,63 @@ pnpm format         # oxfmt
 `pnpm lint` builds first, since `.oxlintrc.json` loads the plugin out of
 `dist/`.
 
+## Releasing
+
+Publishing runs in GitHub Actions
+(`.github/workflows/release.yml`) on any `v*` tag, using npm's
+[trusted publishing](https://docs.npmjs.com/trusted-publishers): the workflow
+presents an OIDC identity, and npm exchanges it for a short-lived credential.
+There is no `NPM_TOKEN` to create, store or rotate.
+
+```bash
+pnpm version patch   # or minor / major; commits the bump and tags it
+git push --follow-tags
+```
+
+The workflow installs with a frozen lockfile, checks the tag matches
+`package.json`, lints, tests, then publishes. `prepublishOnly` rebuilds and
+retests, so a stale `dist/` can't ship. Provenance is generated automatically
+for OIDC publishes from a public repo.
+
+### One-time setup
+
+1. **Publish `0.1.0` once, by hand.** npm can't attach a trusted publisher to a
+   package that doesn't exist yet, and OIDC can't create the first version
+   ([npm/cli#8544](https://github.com/npm/cli/issues/8544)). Run
+   `npm login` then `npm publish --provenance=false` in this repo. That's an
+   interactive login, not a stored token.
+2. **Add the trusted publisher** — npmjs.com → the package → Settings →
+   Trusted publishing → GitHub Actions:
+
+   | Field        | Value                         |
+   | ------------ | ----------------------------- |
+   | Organization | `gregdev`                     |
+   | Repository   | `oxlint-plugin-padding-lines` |
+   | Workflow     | `release.yml`                 |
+   | Environment  | _(leave blank)_               |
+
+   Values are case-sensitive and must match exactly; npm doesn't validate them
+   when you save, so a typo only surfaces as `ENEEDAUTH` on the next tag.
+
+3. **Optionally lock it down** — Settings → Publishing access → _Require
+   two-factor authentication and disallow tokens_. Trusted publishers keep
+   working; old tokens stop working.
+
+A new trusted publisher expires if its first successful publish doesn't happen
+within 2 days, so tag a release (say `v0.1.1`) soon after step 2.
+
+The `repository.url` in `package.json` must match the GitHub repo exactly, which
+is why it's spelled out there.
+
+### Publishing from your machine
+
+Attestations can only be generated inside a supported CI provider, so turn
+provenance off explicitly:
+
+```bash
+npm publish --provenance=false
+```
+
 ## License
 
 MIT
