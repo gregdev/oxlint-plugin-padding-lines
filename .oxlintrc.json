@@ -38,7 +38,7 @@
         "ignoreRestSiblings": true
       }
     ],
-    "@gregdev/oxlint-plugin-stylistic/padding-line-between-statements": [
+    "@gregdev/oxlint-plugin-padding-lines/padding-line-between-statements": [
       "error",
       {
         "blankLine": "always",

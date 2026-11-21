@@ -3,7 +3,7 @@ import { builtinRules } from 'eslint/use-at-your-own-risk'
 import tsParser from '@typescript-eslint/parser'
 import { describe, expect, it } from 'vitest'
 import type { PaddingOption } from './fixtures.js'
-import { FIXTURES, SOA_BUYFLOW_OPTIONS } from './fixtures.js'
+import { FIXTURES, GREGS_OPTIONS } from './fixtures.js'
 import { runOxlint, runOxlintFix } from './helpers/run-oxlint.js'
 
 const RULE = 'padding-line-between-statements'
@@ -36,8 +36,8 @@ const eslintFindings = (
 describe('parity with ESLint: findings', () => {
   for (const [name, code] of Object.entries(FIXTURES)) {
     it(`reports the same findings on ${name}`, () => {
-      expect(runOxlint(code, SOA_BUYFLOW_OPTIONS)).toEqual(
-        eslintFindings(code, SOA_BUYFLOW_OPTIONS),
+      expect(runOxlint(code, GREGS_OPTIONS)).toEqual(
+        eslintFindings(code, GREGS_OPTIONS),
       )
     })
   }
@@ -46,12 +46,9 @@ describe('parity with ESLint: findings', () => {
 describe('parity with ESLint: autofix', () => {
   for (const [name, code] of Object.entries(FIXTURES)) {
     it(`produces the same source as ESLint --fix on ${name}`, () => {
-      const expected = linter.verifyAndFix(
-        code,
-        eslintConfig(SOA_BUYFLOW_OPTIONS),
-      )
+      const expected = linter.verifyAndFix(code, eslintConfig(GREGS_OPTIONS))
 
-      expect(runOxlintFix(code, SOA_BUYFLOW_OPTIONS)).toBe(expected.output)
+      expect(runOxlintFix(code, GREGS_OPTIONS)).toBe(expected.output)
     })
   }
 
@@ -119,6 +116,6 @@ describe('parity with ESLint: autofix', () => {
       '',
     ].join('\n')
 
-    expect(runOxlintFix(code, SOA_BUYFLOW_OPTIONS)).toBe(code)
+    expect(runOxlintFix(code, GREGS_OPTIONS)).toBe(code)
   })
 })

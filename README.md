@@ -1,32 +1,42 @@
-# @gregdev/oxlint-plugin-stylistic
+# @gregdev/oxlint-plugin-padding-lines
 
-Stylistic rules that oxlint does not ship, implemented to match ESLint's
-behaviour exactly.
+`padding-line-between-statements` as a native oxlint rule, with the same
+behaviour and options as ESLint's version, including autofix.
 
-oxlint has no native `padding-line-between-statements`, and formatting can't
-cover it: Prettier and oxfmt never insert blank lines _between statements_.
-This plugin fills that gap without dragging a second linter into the project.
+## Why this exists
+
+- **oxlint has no native equivalent.** Oxc dropped its stylistic rules in
+  favour of oxfmt, so `padding-line-between-statements` isn't in oxlint's rule
+  set.
+- **A formatter won't cover it.** Prettier and oxfmt don't insert blank lines
+  between statements, so neither will produce or repair this spacing.
+- **You could load `@stylistic/eslint-plugin` instead**, but that means loading
+  a 96-rule plugin to use one rule, through oxlint's JS plugin API — which is
+  still alpha.
+
+That third point is the actual reason to install this: it's one small rule
+instead of a large plugin behind an alpha API. It is not a claim that the rule
+is otherwise impossible to run under oxlint.
 
 ## Rules
 
-| Rule                              | Status                                        | Autofix |
-| --------------------------------- | --------------------------------------------- | ------- |
-| `padding-line-between-statements` | All ESLint statement types and option triples | Yes     |
+| Rule                              | Autofix |
+| --------------------------------- | ------- |
+| `padding-line-between-statements` | Yes     |
 
-Semantics are copied from ESLint's own implementation, including the cases that
-are easy to get wrong:
+Behaviour follows ESLint's implementation, including the fiddly bits:
 
-- comments split a blank-line gap in two
-- a leading semicolon in semicolon-less code belongs to the _next_ statement
-- IIFEs and `do`/`while` count as block-like statements
-- directives (`'use strict'`) are distinguished from plain expressions
-- labelled statements match by their inner statement
-- the last matching option triple wins
+- a comment in the gap splits it into two gaps
+- in semicolon-less code, a leading `;` belongs to the next statement
+- IIFEs and `do`/`while` count as block-like
+- directives (`'use strict'`) aren't treated as plain expressions
+- a labelled statement is matched by the statement inside it
+- when several option triples match, the last one wins
 
 ## Install
 
 ```bash
-pnpm add -D @gregdev/oxlint-plugin-stylistic
+pnpm add -D @gregdev/oxlint-plugin-padding-lines
 ```
 
 ## oxlint
@@ -34,9 +44,9 @@ pnpm add -D @gregdev/oxlint-plugin-stylistic
 ```jsonc
 // .oxlintrc.json
 {
-  "jsPlugins": ["@gregdev/oxlint-plugin-stylistic"],
+  "jsPlugins": ["@gregdev/oxlint-plugin-padding-lines"],
   "rules": {
-    "@gregdev/oxlint-plugin-stylistic/padding-line-between-statements": [
+    "@gregdev/oxlint-plugin-padding-lines/padding-line-between-statements": [
       "error",
       { "blankLine": "always", "prev": "*", "next": "return" },
       { "blankLine": "any", "prev": ["block-like", "block"], "next": "return" },
@@ -45,53 +55,57 @@ pnpm add -D @gregdev/oxlint-plugin-stylistic
 }
 ```
 
-Options are the same triples ESLint takes, and may be repeated. The schema
-describes the whole array, so any number of triples validates.
+The options are the same triples ESLint takes, and you can repeat them. The
+schema validates the array as a whole, so any number of triples works.
 
 ## ESLint
 
-The rule follows the standard `create(context)` contract, so it works
-unmodified as an ESLint plugin too:
+The rule uses the normal `create(context)` shape, so the same file works as an
+ESLint plugin too:
 
 ```js
 // eslint.config.mjs
-import stylistic from '@gregdev/oxlint-plugin-stylistic'
+import paddingLines from '@gregdev/oxlint-plugin-padding-lines'
 
 export default [
   {
-    plugins: { '@gregdev/stylistic': stylistic },
+    plugins: { '@gregdev/padding-lines': paddingLines },
     rules: {
-      '@gregdev/stylistic/padding-line-between-statements': ['error', ...],
+      '@gregdev/padding-lines/padding-line-between-statements': ['error', ...],
     },
   },
 ]
 ```
 
+If you use ESLint rather than oxlint, you almost certainly want
+`@stylistic/eslint-plugin` instead — it ships this rule alongside everything
+else, and on ESLint the plugin-size argument doesn't apply.
+
 ## Parity
 
-The test suite runs every fixture through both this rule (via the real oxlint
-binary) and ESLint's built-in `padding-line-between-statements` (via
-`eslint/use-at-your-own-risk`), then asserts that findings _and_ `--fix`
-output are byte-identical.
+Each fixture goes through both this rule (running the real oxlint binary) and
+ESLint's built-in `padding-line-between-statements` (loaded via
+`eslint/use-at-your-own-risk`). The test asserts that the findings and the
+`--fix` output are byte-identical.
 
 ```bash
 pnpm test
 ```
 
-ESLint is a devDependency for this reason only. It is never imported at
-runtime and is not a peer dependency.
+That's the only reason ESLint is a devDependency. It isn't imported at runtime
+and isn't a peer dependency.
 
 ## Caveats
 
-- **Autofix inserts and removes one blank line.** `--fix` matches ESLint's
-  output. A `never` violation with a comment between the statements is
-  reported but not fixed, because merging the gap would swallow the comment.
-- **oxlint JS plugins are alpha.** The `@oxlint/plugins` API can change between
-  oxlint minors. The version is pinned and treated as a peer range.
-- **Vue/Svelte/Astro:** oxlint lints only `<script>` blocks. That matches what
-  ESLint does for this rule, but template formatting is out of scope.
-- **Not a formatter.** Keep oxfmt (or Prettier) for whitespace; this rule only
-  cares about statement separation.
+- Autofix adds or removes a single blank line, same as ESLint. It won't fix a
+  `never` violation when there's a comment in the gap, since merging the two
+  would swallow the comment.
+- oxlint's JS plugin API is alpha, so `@oxlint/plugins` can shift between
+  oxlint minors. It's pinned here.
+- Vue, Svelte and Astro: oxlint only lints `<script>` blocks. ESLint behaves
+  the same way with this rule, and template formatting is out of scope.
+- This isn't a formatter. Keep oxfmt or Prettier for whitespace; the rule only
+  deals with how statements are separated.
 
 ## Development
 
@@ -103,7 +117,7 @@ pnpm lint           # oxlint, dogfooding this plugin
 pnpm format         # oxfmt
 ```
 
-`pnpm lint` builds first because `.oxlintrc.json` loads the plugin from
+`pnpm lint` builds first, since `.oxlintrc.json` loads the plugin out of
 `dist/`.
 
 ## License

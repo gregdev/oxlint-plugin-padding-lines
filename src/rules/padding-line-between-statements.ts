@@ -87,7 +87,7 @@ const paddingLineBetweenStatements = defineRule({
     docs: {
       description:
         'Require or disallow blank lines between statements, matching ESLint semantics.',
-      url: 'https://github.com/gregdev/oxlint-plugin-stylistic#padding-line-between-statements',
+      url: 'https://github.com/gregdev/oxlint-plugin-padding-lines#padding-line-between-statements',
     },
     messages: MESSAGES,
     schema,

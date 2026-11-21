@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url'
 import type { PaddingOption } from '../fixtures.js'
 
 const require = createRequire(import.meta.url)
-const RULE = '@gregdev/oxlint-plugin-stylistic/padding-line-between-statements'
+const RULE =
+  '@gregdev/oxlint-plugin-padding-lines/padding-line-between-statements'
 
 const packageRoot = fileURLToPath(new URL('../..', import.meta.url))
 const pluginPath = join(packageRoot, 'dist', 'index.js')

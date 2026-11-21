@@ -4,7 +4,7 @@ import { paddingLineBetweenStatements } from './rules/padding-line-between-state
 
 /** The plugin name doubles as the rule namespace in oxlint config. */
 export const plugin: Plugin = definePlugin({
-  meta: { name: '@gregdev/oxlint-plugin-stylistic' },
+  meta: { name: '@gregdev/oxlint-plugin-padding-lines' },
   rules: {
     'padding-line-between-statements': paddingLineBetweenStatements,
   },

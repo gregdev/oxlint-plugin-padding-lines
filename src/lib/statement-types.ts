@@ -206,7 +206,10 @@ const MATCHERS: Record<StatementTypeName, StatementMatcher> = {
   default: keyword('default'),
 }
 
-/** Labelled statements match by their inner statement; lists match on any. */
+/**
+ * A labelled statement matches on its inner statement; a list matches if any
+ * entry does.
+ */
 export const statementMatches = (
   node: AstNode,
   type: string | readonly string[],

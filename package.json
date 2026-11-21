@@ -1,7 +1,7 @@
 {
-  "name": "@gregdev/oxlint-plugin-stylistic",
+  "name": "@gregdev/oxlint-plugin-padding-lines",
   "version": "0.1.0",
-  "description": "Oxlint stylistic rules missing from oxlint core, with ESLint-identical behaviour. Currently: padding-line-between-statements.",
+  "description": "A native oxlint rule for padding-line-between-statements, behaving the same as its ESLint counterpart, with autofix.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",

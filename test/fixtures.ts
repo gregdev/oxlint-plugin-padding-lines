@@ -7,10 +7,9 @@ export interface PaddingOption {
 }
 
 /**
- * The option set from the soa-buyflow project. Kept identical here so the
- * parity suite exercises the same rule combinations that project relies on.
+ * The option set that Greg prefers.
  */
-export const SOA_BUYFLOW_OPTIONS: PaddingOption[] = [
+export const GREGS_OPTIONS: PaddingOption[] = [
   { blankLine: 'always', prev: '*', next: 'return' },
   { blankLine: 'any', prev: ['block-like', 'block'], next: 'return' },
   { blankLine: 'never', prev: 'empty', next: 'return' },

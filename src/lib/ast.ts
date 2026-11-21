@@ -1,8 +1,8 @@
 import type { Span } from '@oxlint/plugins'
 
 /**
- * Structural view of the few node fields the rule reads. Both linters emit
- * these, but their typings are ~200-way unions.
+ * Just the node fields this rule actually touches. Both linters emit them,
+ * but their own typings are enormous unions, so we duck-type instead.
  */
 export interface AstNode extends Span {
   type: string
